@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:inogpt/constants/constants.dart';
+import 'package:inogpt/providers/chat_provider.dart';
 import 'package:inogpt/services/assets_manager.dart';
 import 'package:inogpt/widgets/text_widget.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
+import 'package:provider/provider.dart';
 
-class ChatWidget extends StatelessWidget {
+class ChatWidget extends StatefulWidget {
   final String msg;
   final int chatIndex;
 
@@ -15,18 +17,25 @@ class ChatWidget extends StatelessWidget {
   });
 
   @override
+  State<ChatWidget> createState() => _ChatWidgetState();
+}
+
+class _ChatWidgetState extends State<ChatWidget> with AutomaticKeepAliveClientMixin {
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final chatProvider = Provider.of<ChatProvider>(context);
     return Column(
       children: [
         Material(
-          color: chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
+          color: widget.chatIndex == 0 ? scaffoldBackgroundColor : cardColor,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
-                  chatIndex == 0
+                  widget.chatIndex == 0
                       ? AssetsManager.userImage
                       : AssetsManager.botImage,
                   width: 30,
@@ -36,9 +45,9 @@ class ChatWidget extends StatelessWidget {
                   width: 8,
                 ),
                 Expanded(
-                  child: chatIndex == 0
+                  child: widget.chatIndex == 0
                       ? TextWidget(
-                          label: msg,
+                          label: widget.msg,
                         )
                       : DefaultTextStyle(
                           style: const TextStyle(
@@ -49,17 +58,21 @@ class ChatWidget extends StatelessWidget {
                           child: AnimatedTextKit(
                             isRepeatingAnimation: false,
                             repeatForever: false,
-                            displayFullTextOnTap: true,
+                            // displayFullTextOnTap: true,
                             totalRepeatCount: 0,
+                            onFinished: () {
+                              chatProvider.finishingText();
+                            },
                             animatedTexts: [
                               TyperAnimatedText(
-                                msg.trim(),
+                                widget.msg.trim(),
+                                speed: const Duration(milliseconds:30),
                               ),
                             ],
                           ),
                         ),
                 ),
-                chatIndex == 0
+                widget.chatIndex == 0
                     ? const SizedBox.shrink()
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -85,4 +98,8 @@ class ChatWidget extends StatelessWidget {
       ],
     );
   }
+  
+  @override
+  // TODO: implement wantKeepAlive
+  bool get wantKeepAlive => true;
 }

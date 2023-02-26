@@ -3,15 +3,14 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:inogpt/constants/constants.dart';
-import 'package:inogpt/models/chat_models.dart';
 import 'package:inogpt/providers/chat_provider.dart';
 import 'package:inogpt/providers/model_provider.dart';
-import 'package:inogpt/services/api_services.dart';
 import 'package:inogpt/services/assets_manager.dart';
 import 'package:inogpt/services/services.dart';
 import 'package:inogpt/widgets/chat_widget.dart';
 import 'package:inogpt/widgets/text_widget.dart';
 import 'package:provider/provider.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -80,12 +79,22 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Expanded(
               child: ListView.builder(
+                addAutomaticKeepAlives: true,
                 controller: listScrollController,
                 itemCount: chatProvider.chatList.length,
                 itemBuilder: (context, index) {
-                  return ChatWidget(
-                    msg: chatProvider.chatList[index].msg,
-                    chatIndex: chatProvider.chatList[index].chatIndex,
+                  return VisibilityDetector(
+                    key: Key("unique key"),
+                    onVisibilityChanged: (VisibilityInfo info) {
+                      if (Provider.of<ChatProvider>(context, listen: false).getIsFinished ==
+                          false) {
+                        scrollListToEnd();
+                      }
+                    },
+                    child: ChatWidget(
+                      msg: chatProvider.chatList[index].msg,
+                      chatIndex: chatProvider.chatList[index].chatIndex,
+                    ),
                   );
                 },
               ),
@@ -183,14 +192,15 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       String msg = textEditingController.text;
       setState(() {
+        // scrollListToEnd();
+        chatProvider.unfinishingText();
         isTyping = true;
         chatProvider.addUserMessage(msg: msg);
         textEditingController.clear();
         focusNode.unfocus();
       });
       await chatProvider.sendMessage(
-          msg: msg,
-          choosenModel: modelProvider.getCurrentModel);
+          msg: msg, choosenModel: modelProvider.getCurrentModel);
       setState(() {});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,7 +213,6 @@ class _ChatScreenState extends State<ChatScreen> {
       );
     } finally {
       setState(() {
-        scrollListToEnd();
         isTyping = false;
       });
     }

@@ -4,6 +4,21 @@ import 'package:inogpt/models/chat_models.dart';
 import '../services/api_services.dart';
 
 class ChatProvider with ChangeNotifier {
+  bool isFinished = true;
+
+  bool get getIsFinished {
+    return isFinished;
+  }
+
+  void finishingText () {
+    isFinished = true;
+    notifyListeners();
+  }
+  void unfinishingText () {
+    isFinished = false;
+    notifyListeners();
+  }
+
   List<ChatModel> chatList = [];
   List<ChatModel> get getChatList {
     return chatList;
